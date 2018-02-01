@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import argparse
+import matplotlib.pyplot as plt
+
+from src.core.translate import Translator
+from src.core.parse import Parser
+from src.core.databank import Databank
+from src.util.point import Point
+
+
+def f(n):
+    return '%8.2f' % n if n is not None else '        '
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('struct')
+    parser.add_argument('--format', default='pdb')
+    args = parser.parse_args()
+    path = Databank(format=args.format).path_for(args.struct)
+    aminos = Parser().read_file(path)
+    print('structure %s' % args.struct)
+    print('%8s%8s%8s%3s%8s' % ('phi', 'psi', 'omega', 'ch', 'residue'))
+    for amino in aminos:
+        print('%s%s%s %2s %3s%i' % (f(amino.phi()), f(amino.psi()),
+                                    f(amino.omega()), amino.chain, amino.type,
+                                    amino.index))
+    print('%8s%8s%8s%3s%8s' % ('phi', 'psi', 'omega', 'ch', 'residue'))
+
+
+if __name__ == '__main__': main()

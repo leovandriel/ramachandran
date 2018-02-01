@@ -1,0 +1,141 @@
+#!/usr/bin/env python
+
+import argparse
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import scipy.stats as sts
+import numpy as np
+
+from src.core.translate import Translator
+from src.core.parse import Parser
+from src.core.databank import Databank
+from src.util.point import Point
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('struct')
+    parser.add_argument('aminoacid', nargs='?', default='all')
+    parser.add_argument('--log', action='store_true')
+    parser.add_argument('--format', default='pdb')
+    args = parser.parse_args()
+    path = Databank(format=args.format).path_for(args.struct)
+
+    print('structure %s, aminoacid %s' % (args.struct, args.aminoacid))
+
+    aminos = Parser().read_file(path)
+
+    print('count %i' % len(aminos))
+
+    name = 'aminos'
+    if args.aminoacid != 'all':
+        type = args.aminoacid.upper()
+        aminos = [a for a in aminos if a.type == type]
+        name = type
+    title = '%i %s' % (len(aminos), name)
+
+    plt.ion()
+
+    # compare bond angles
+    fig, ax = plt.subplots()
+    plt.yscale('log', nonposy='clip') if args.log else plt.yscale('linear')
+    array = [
+        v for v in map(lambda a: a.pC.y if not a.pC is None else None, aminos)
+        if v is not None
+    ]
+    ax.hist(array, bins=60, label='Phi-a', alpha=0.7)
+    array = [
+        v for v in map(lambda a: a.pN.y if not a.pN is None else None, aminos)
+        if v is not None
+    ]
+    ax.hist(array, bins=60, label='Psi-a', alpha=0.7)
+    array = [
+        v
+        for v in map(lambda a: a.pCA.y if not a.pCA is None else None, aminos)
+        if v is not None
+    ]
+    ax.hist(array, bins=60, label='Omega-a', alpha=0.7)
+    ax.set_title('Angles of %s in %s' % (title, args.struct))
+    plt.legend()
+
+    # compare bond distances
+    fig, ax = plt.subplots()
+    plt.yscale('log', nonposy='clip') if args.log else plt.yscale('linear')
+    array = [
+        v for v in map(lambda a: a.pC.z if not a.pC is None else None, aminos)
+        if v is not None
+    ]
+    ax.hist(array, bins=60, label='Phi-d', alpha=0.7)
+    array = [
+        v for v in map(lambda a: a.pN.z if not a.pN is None else None, aminos)
+        if v is not None and v < 2
+    ]
+    ax.hist(array, bins=60, label='Psi-d', alpha=0.7)
+    array = [
+        v
+        for v in map(lambda a: a.pCA.z if not a.pCA is None else None, aminos)
+        if v is not None
+    ]
+    ax.hist(array, bins=60, label='Omega-d', alpha=0.7)
+    ax.set_title('Distances of %s in %s' % (title, args.struct))
+    plt.legend()
+
+    # compare bond rotations
+    fig, ax = plt.subplots()
+    plt.yscale('log', nonposy='clip') if args.log else plt.yscale('linear')
+    array = [v for v in map(lambda a: a.phi(), aminos) if v is not None]
+    ax.hist(array, bins=60, label='Phi', alpha=0.7)
+    array = [v for v in map(lambda a: a.psi(), aminos) if v is not None]
+    ax.hist(array, bins=60, label='Psi', alpha=0.7)
+    array = [v for v in map(lambda a: a.omega(), aminos) if v is not None]
+    ax.hist(array, bins=60, label='Omega', alpha=0.7)
+    ax.set_title('Rotations of %s in %s' % (title, args.struct))
+    plt.legend()
+
+    # ramachandran data
+    phis = [
+        v for v in map(lambda a: a.phi() if a.psi() is not None else None,
+                       aminos) if v is not None
+    ]
+    psis = [
+        v for v in map(lambda a: a.psi() if a.phi() is not None else None,
+                       aminos) if v is not None
+    ]
+
+    # plot 2D histogram
+    fig, ax = plt.subplots()
+    ax.axhline(0, color='black', alpha=0.5, linewidth=1)
+    ax.axvline(0, color='black', alpha=0.5, linewidth=1)
+    norm = mpl.colors.LogNorm() if args.log else mpl.colors.Normalize()
+    histogram = ax.hist2d(
+        phis,
+        psis,
+        bins=240,
+        range=[[-180, 180], [-180, 180]],
+        norm=norm,
+        cmap=plt.cm.YlOrRd)
+    ax.set_title('Ramachandran plot of %s in %s' % (title, args.struct))
+    plt.colorbar(histogram[3], ax=ax)
+
+    # Peform the kernel density estimate
+    values = np.vstack([phis, psis])
+    kernel = sts.gaussian_kde(values)
+    xx, yy = np.mgrid[-180:180:100j, -180:180:100j]
+    positions = np.vstack([xx.ravel(), yy.ravel()])
+    func = np.reshape(kernel(positions).T, xx.shape)
+
+    # plot contours
+    fig, ax = plt.subplots()
+    ax.axhline(0, color='black', alpha=0.5, linewidth=1)
+    ax.axvline(0, color='black', alpha=0.5, linewidth=1)
+    norm = mpl.colors.LogNorm() if args.log else mpl.colors.Normalize()
+    contour = ax.contourf(xx, yy, func, norm=norm, cmap=plt.cm.YlOrRd)
+    ax.set_xlabel('Phi')
+    ax.set_ylabel('Psi')
+    ax.set_title('Ramachandran plot of %s in %s' % (title, args.struct))
+
+    plt.show()
+    input("Press Enter to continue...")
+
+
+if __name__ == '__main__': main()

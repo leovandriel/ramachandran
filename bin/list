@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+
+import argparse
+
+from src.core.databank import Databank
+
+
+def main():
+    parser = argparse.ArgumentParser(description='List local files.')
+    parser.add_argument('struct', nargs='?', default=None)
+    parser.add_argument('--format', default='pdb')
+    args = parser.parse_args()
+    databank = Databank(format=args.format)
+
+    if args.struct:
+        print(args.struct, databank.info(args.struct))
+    else:
+        for name in databank.list():
+            print(name, databank.info(name))
+
+
+if __name__ == '__main__': main()
