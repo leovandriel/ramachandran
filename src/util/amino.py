@@ -1,5 +1,59 @@
 from src.util.point import Point
 
+char_lookup = {
+    'ALA': 'A',
+    'ARG': 'R',
+    'ASN': 'N',
+    'ASP': 'D',
+    'CYS': 'C',
+    'GLN': 'Q',
+    'GLU': 'E',
+    'GLY': 'G',
+    'HIS': 'H',
+    'ILE': 'I',
+    'LEU': 'L',
+    'LYS': 'K',
+    'MET': 'M',
+    'PHE': 'F',
+    'PRO': 'P',
+    'SER': 'S',
+    'THR': 'T',
+    'TRP': 'W',
+    'TYR': 'Y',
+    'VAL': 'V',
+}
+
+name_lookup = {
+    'ALA': 'Alanine',
+    'ARG': 'Arginine',
+    'ASN': 'Asparagine',
+    'ASP': 'Aspartic acid',
+    'ASP': 'Aspartic',
+    'CYS': 'Cysteine',
+    'GLN': 'Glutamine',
+    'GLU': 'Glutamic acid',
+    'GLU': 'Glutamic',
+    'GLY': 'Glycine',
+    'HIS': 'Histidine',
+    'ILE': 'Isoleucine',
+    'LEU': 'Leucine',
+    'LYS': 'Lysine',
+    'MET': 'Methionine',
+    'PHE': 'Phenylalanine',
+    'PRO': 'Proline',
+    'SER': 'Serine',
+    'THR': 'Threonine',
+    'TRP': 'Tryptophan',
+    'TYR': 'Tyrosine',
+    'VAL': 'Valine',
+}
+
+code_lookup = {}
+for code in char_lookup:
+    code_lookup[char_lookup[code].lower()] = code
+for code in name_lookup:
+    code_lookup[name_lookup[code].lower()] = code
+
 
 class Amino:
     def __init__(self, type, chain, index):
@@ -51,6 +105,19 @@ class Amino:
         if self.is_chain_end:
             return 'E'
         return 'M'
+
+    def code_for(name):
+        if name is None:
+            return None
+        if name.upper() in name_lookup:
+            return name.upper()
+        return code_lookup.get(name.lower(), None)
+
+    def name_for(name):
+        return name_lookup.get(Amino.code_for(name), None)
+
+    def char_for(name):
+        return char_lookup.get(Amino.code_for(name), None)
 
     def __str__(self):
         return '(%s,%s,%s,%s,%s,%s,%s)' % (self.type, self.chain, self.index,

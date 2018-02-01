@@ -4,6 +4,7 @@ import random
 from src.util.point import Point
 from src.core.translate import Translator
 from src.core.parse import Parser
+from src.util.amino import Amino
 
 
 class TestPoint(unittest.TestCase):
@@ -115,6 +116,19 @@ class TestParser(unittest.TestCase):
         self.assertEqual(aminos[0].N, Point(-69.116000, 7.943000, -16.525000))
         self.assertEqual(aminos[0].CA, Point(-70.302000, 8.654000, -17.017000))
         self.assertEqual(aminos[0].C, Point(-71.449000, 7.711000, -17.377000))
+
+
+class TestAmino(unittest.TestCase):
+    def test_lookup_code(self):
+        self.assertEqual(Amino.lookup_code(None), None)
+        self.assertEqual(Amino.lookup_code(''), None)
+        self.assertEqual(Amino.lookup_code('A'), 'ALA')
+        self.assertEqual(Amino.lookup_code('a'), 'ALA')
+        self.assertEqual(Amino.lookup_code('B'), None)
+        self.assertEqual(Amino.lookup_code('Alanine'), 'ALA')
+        self.assertEqual(Amino.lookup_code('aLanine'), 'ALA')
+        self.assertEqual(Amino.lookup_code('ala'), 'ALA')
+        self.assertEqual(Amino.lookup_code('ALA'), 'ALA')
 
 
 if __name__ == '__main__':

@@ -19,6 +19,9 @@ def main():
     parser.add_argument('--format', default='pdb')
     args = parser.parse_args()
     path = Databank(format=args.format).path_for(args.struct)
+    if path is None:
+        print('structure %s not in databank' % args.struct)
+        exit()
     aminos = Parser().read_file(path)
     print('structure %s' % args.struct)
     print('%8s%8s%8s%3s%8s' % ('phi', 'psi', 'omega', 'ch', 'residue'))

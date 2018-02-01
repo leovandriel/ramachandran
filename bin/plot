@@ -10,28 +10,37 @@ from src.core.translate import Translator
 from src.core.parse import Parser
 from src.core.databank import Databank
 from src.util.point import Point
+from src.util.amino import Amino
 
 
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('struct')
-    parser.add_argument('aminoacid', nargs='?', default='all')
+    parser.add_argument('aminoacid', nargs='?', default=None)
     parser.add_argument('--log', action='store_true')
     parser.add_argument('--format', default='pdb')
     args = parser.parse_args()
     path = Databank(format=args.format).path_for(args.struct)
 
-    print('structure %s, aminoacid %s' % (args.struct, args.aminoacid))
+    if path is None:
+        print('structure %s not in databank' % args.struct)
+        exit()
+
+    code = Amino.code_for(args.aminoacid)
+    if args.aminoacid is not None and code is None:
+        print('aminoacid %s not in databank' % args.aminoacid)
+        exit()
+
+    print('structure %s, aminoacid %s' % (args.struct, code))
 
     aminos = Parser().read_file(path)
 
     print('count %i' % len(aminos))
 
-    name = 'aminos'
-    if args.aminoacid != 'all':
-        type = args.aminoacid.upper()
-        aminos = [a for a in aminos if a.type == type]
-        name = type
+    name = 'aminoacids'
+    if code is not None:
+        aminos = [a for a in aminos if a.type == code]
+        name = Amino.name_for(code)
     title = '%i %s' % (len(aminos), name)
 
     plt.ion()

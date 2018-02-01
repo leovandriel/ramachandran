@@ -13,7 +13,11 @@ def main():
     databank = Databank(format=args.format)
 
     if args.struct:
-        print(args.struct, databank.info(args.struct))
+        info = databank.info(args.struct)
+        if info is None:
+            print('structure %s not in databank' % args.struct)
+            exit()
+        print(args.struct, info)
     else:
         for name in databank.list():
             print(name, databank.info(name))
